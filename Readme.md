@@ -12,3 +12,95 @@
 
 ### Detail
 
+
+## Create Project
+
+Để khởi tạo và chạy một project trong Golang, bạn có thể làm theo các bước sau:
+
+1. Cài đặt Golang từ trang chủ: https://golang.org/dl/  
+2. Tạo một thư mục mới cho project của bạn và chuyển vào thư mục đó.
+
+3. Khởi tạo một module Go bằng lệnh:
+   ```sh
+   go mod init my-go-project
+   ```
+   Lệnh này sẽ tạo file go.mod chứa thông tin về module.
+
+4. Tạo file main.go với nội dung sau (dưới đây là file hoàn chỉnh):
+
+```go title=main.go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}
+```
+
+5. File go.mod được tạo ra sẽ có nội dung tương tự như sau (bạn có thể tạo file này nếu muốn tinh chỉnh hoặc xem thông tin version):
+
+```go title=go.mod
+module my-go-project
+
+go 1.20
+```
+
+6. Chạy project bằng cách sử dụng lệnh:
+   ```sh
+   go run main.go
+   ```
+   Bạn sẽ thấy dòng chữ "Hello, World!" được in ra.
+
+7. Nếu muốn biên dịch chương trình thành file thực thi, sử dụng lệnh:
+   ```sh
+   go build
+   ```
+   Sau khi biên dịch, file thực thi có tên là `my-go-project` (hoặc `my-go-project.exe` trên Windows) sẽ được tạo ra. Chạy file thực thi như sau:
+   ```sh
+   ./my-go-project
+   ```
+
+Ngoài ra, bạn có thể mở rộng cấu trúc project với các thư mục như `cmd/` và `pkg/` nhằm quản lý mã nguồn khi project phát triển. Ví dụ:
+
+Cấu trúc thư mục:
+```
+my-go-project/
+├── go.mod
+├── cmd/
+│   └── my-go-project/
+│       └── main.go
+└── pkg/
+    └── somepackage/
+        └── somefile.go
+```
+
+Ví dụ file main.go trong thư mục cmd/my-go-project/:
+
+```go title=cmd/my-go-project/main.go
+package main
+
+import (
+    "fmt"
+    "my-go-project/pkg/somepackage"
+)
+
+func main() {
+    fmt.Println("Hello, World!")
+    somepackage.SomeFunction()
+}
+```
+
+Và file somepackage/somefile.go:
+
+```go title=pkg/somepackage/somefile.go
+package somepackage
+
+import "fmt"
+
+func SomeFunction() {
+    fmt.Println("Some function in package somepackage")
+}
+```
+
+Như vậy, bạn có thể dễ dàng tổ chức và phát triển project Golang của mình. Chúc bạn thành công!
