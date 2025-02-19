@@ -11,7 +11,21 @@
 - [Building a Basic RPC Server and client with go](https://www.youtube.com/watch?v=1MPWPq2N768&list=PLJbE2Yu2zumAixEws7gtptADSLmZ_pscP)
 
 ### Detail
+## Install golang
 
+```bash
+LATEST_GO_VERSION=$(curl -sL https://go.dev/VERSION?m=text)
+LATEST_GO_VERSION=$(echo $LATEST_GO_VERSION | awk '{ print $1 }')
+GO_ARCH=$(if [ "$(uname -m)" = "x86_64" ]; then echo "amd64"; elif [ "$(uname -m)" = "aarch64" ] || [ "$(uname -m)" = "arm64" ]; then echo "arm64"; else echo "Kiến trúc hệ thống không được hỗ trợ: $(uname -m)" && exit 1; fi)
+cd ~
+curl -fsSL -O https://go.dev/dl/${LATEST_GO_VERSION}.linux-${GO_ARCH}.tar.gz
+GO_FILE_INSTALL=$(echo ${LATEST_GO_VERSION}.linux-${GO_ARCH}.tar.gz)
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf ${GO_FILE_INSTALL}
+grep -q "export PATH=\$PATH:/usr/local/go/bin" ~/.bashrc || echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
+go version
+
+```
 
 ## Create Project
 
