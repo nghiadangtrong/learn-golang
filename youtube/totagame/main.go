@@ -15,6 +15,16 @@ const (
 	MAX_SAMPLES = 100
 )
 
+type input struct { 
+  pressedKey byte
+}
+
+func (i *input) update() {
+  b := make([]byte, 1) 
+  os.Stdin.Read(b)
+  i.pressedKey = b[0]
+}
+
 type position struct {
 	x, y int
 }
@@ -22,12 +32,28 @@ type position struct {
 type player struct {
 	pos   position
 	level *level
+  input *input
+
+  reverse bool
 }
 
 func (p *player) update() {
-  p.level.data[p.pos.y][p.pos.x] = NOTHING // Xóa vị trí cũ 
+  if p.reverse {
+    p.pos.x -= 1
+    
+    if p.pos.x <= 1 {
+      p.pos.x += 1
+      p.reverse = false
+    }
+    return 
+  } 
   p.pos.x += 1
-  p.level.data[p.pos.y][p.pos.x] = PLAYER  // update vị trí mới 
+  if p.pos.x >= p.level.width - 2 {
+    // p.pos.x = p.level.width - 1
+    p.pos.x -= 1
+    p.reverse = true
+  }
+
 }
 
 type stats struct {
@@ -98,17 +124,23 @@ type game struct {
 	level     *level
 	stats     *stats
   player    *player
+  input     *input
 
 	drawBuf *bytes.Buffer
 }
 
 func newGame(width, height int) *game {
-	lvl := newLevel(width, height)
+  var (
+    lvl = newLevel(width, height)
+    inpu = &input{}
+  )
 	return &game{
 		level:   lvl,
 		drawBuf: new(bytes.Buffer),
 		stats:   newStats(),
+    input: &input{},
     player: &player{
+      input: inpu,
       level: lvl,
       pos: position{x: 2, y: 5},
     },
@@ -130,9 +162,9 @@ func (g *game) loop() {
 }
 
 func (g *game) update() {
-  // g.level.set(g.player.pos, NOTHING)
+  g.level.set(g.player.pos, NOTHING)// xóa vị trí cũ 
   g.player.update()
-  // g.level.set(g.player.pos, PLAYER)
+  g.level.set(g.player.pos, PLAYER) // update vị trí mới 
 }
 
 func (g *game) renderPlayer() {
