@@ -25,8 +25,9 @@ type player struct {
 }
 
 func (p *player) update() {
+  p.level.data[p.pos.y][p.pos.x] = NOTHING // Xóa vị trí cũ 
   p.pos.x += 1
-  // p.level.data[p.pos.y][p.pos.x]
+  p.level.data[p.pos.y][p.pos.x] = PLAYER  // update vị trí mới 
 }
 
 type stats struct {
@@ -52,15 +53,15 @@ func (s *stats) update() {
 
 type level struct {
 	width, height int
-	data          [][]byte
+	data          [][]int
 }
 
 func newLevel(width, height int) *level {
-	data := make([][]byte, height)
+	data := make([][]int, height)
 
 	for h := 0; h < height; h++ {
 		for w := 0; w < width; w++ {
-			data[h] = make([]byte, width)
+			data[h] = make([]int, width)
 		}
 	}
 
@@ -86,6 +87,10 @@ func newLevel(width, height int) *level {
 		height: height,
 		data:   data,
 	}
+}
+
+func (l *level) set(pos position, v int) {
+  l.data[pos.y][pos.x] = v
 }
 
 type game struct {
@@ -118,18 +123,19 @@ func (g *game) start() {
 func (g *game) loop() {
 	for g.isRunning {
 		g.update()
-		g.render()
 		g.stats.update()
+		g.render()
 		time.Sleep(time.Millisecond * 16) // Limit FPS
 	}
 }
 
 func (g *game) update() {
+  // g.level.set(g.player.pos, NOTHING)
   g.player.update()
+  // g.level.set(g.player.pos, PLAYER)
 }
 
 func (g *game) renderPlayer() {
-  g.level.data[g.player.pos.y][g.player.pos.x] = PLAYER
 }
 
 func (g *game) renderLevel() {
@@ -140,7 +146,8 @@ func (g *game) renderLevel() {
 			} else if g.level.data[h][w] == WALL {
 				g.drawBuf.WriteString("▢")
 			} else if g.level.data[h][w] == PLAYER {
-        g.drawBuf.WriteString("P")
+        g.drawBuf.WriteString("⛇")
+        // g.drawBuf.WriteString("⚇")
       }
 		}
 		g.drawBuf.WriteString("\n")
