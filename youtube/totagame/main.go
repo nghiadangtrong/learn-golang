@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -15,14 +16,17 @@ const (
 	MAX_SAMPLES = 100
 )
 
-type input struct { 
-  pressedKey byte
+type input struct {
+	pressedKey byte
 }
 
 func (i *input) update() {
-  b := make([]byte, 1) 
-  os.Stdin.Read(b)
-  i.pressedKey = b[0]
+	b := make([]byte, 1)
+  
+  go func() {
+    os.Stdin.Read(b) // blocking util stdin has stuff in buffer
+    i.pressedKey = b[0]
+  }()
 }
 
 type position struct {
@@ -32,27 +36,27 @@ type position struct {
 type player struct {
 	pos   position
 	level *level
-  input *input
+	input *input
 
-  reverse bool
+	reverse bool
 }
 
 func (p *player) update() {
-  if p.reverse {
-    p.pos.x -= 1
-    
-    if p.pos.x <= 1 {
-      p.pos.x += 1
-      p.reverse = false
-    }
-    return 
-  } 
-  p.pos.x += 1
-  if p.pos.x >= p.level.width - 2 {
-    // p.pos.x = p.level.width - 1
-    p.pos.x -= 1
-    p.reverse = true
-  }
+	if p.reverse {
+		p.pos.x -= 1
+
+		if p.pos.x <= 1 {
+			p.pos.x += 1
+			p.reverse = false
+		}
+		return
+	}
+	p.pos.x += 1
+	if p.pos.x >= p.level.width-2 {
+		// p.pos.x = p.level.width - 1
+		p.pos.x -= 1
+		p.reverse = true
+	}
 
 }
 
@@ -116,34 +120,39 @@ func newLevel(width, height int) *level {
 }
 
 func (l *level) set(pos position, v int) {
-  l.data[pos.y][pos.x] = v
+	l.data[pos.y][pos.x] = v
 }
 
 type game struct {
 	isRunning bool
 	level     *level
 	stats     *stats
-  player    *player
-  input     *input
+	player    *player
+	input     *input
 
 	drawBuf *bytes.Buffer
 }
 
 func newGame(width, height int) *game {
-  var (
-    lvl = newLevel(width, height)
-    inpu = &input{}
-  )
+	// Mục đích: Ẩn con trỏ nhấp nháy trong terminal - Đọc bàn phím ngày khi bấm không cần nhấn enter
+	// stty: Công cụ thay đổi thiết lập terminal | -F: file /dev/tty | cbreak: đọc ký tự ngay lập tức không cần enter
+	// min: Đọc ít nhất 1 ký tự | -echo: không hiển thị ký tự vừa nhập
+	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+	var (
+		lvl  = newLevel(width, height)
+		inpu = &input{}
+	)
 	return &game{
 		level:   lvl,
 		drawBuf: new(bytes.Buffer),
 		stats:   newStats(),
-    input: &input{},
-    player: &player{
-      input: inpu,
-      level: lvl,
-      pos: position{x: 2, y: 5},
-    },
+		input:   &input{},
+		player: &player{
+			input: inpu,
+			level: lvl,
+			pos:   position{x: 2, y: 5},
+		},
 	}
 }
 
@@ -154,6 +163,7 @@ func (g *game) start() {
 
 func (g *game) loop() {
 	for g.isRunning {
+		g.input.update()
 		g.update()
 		g.stats.update()
 		g.render()
@@ -162,12 +172,9 @@ func (g *game) loop() {
 }
 
 func (g *game) update() {
-  g.level.set(g.player.pos, NOTHING)// xóa vị trí cũ 
-  g.player.update()
-  g.level.set(g.player.pos, PLAYER) // update vị trí mới 
-}
-
-func (g *game) renderPlayer() {
+	g.level.set(g.player.pos, NOTHING) // xóa vị trí cũ
+	g.player.update()
+	g.level.set(g.player.pos, PLAYER) // update vị trí mới
 }
 
 func (g *game) renderLevel() {
@@ -178,9 +185,9 @@ func (g *game) renderLevel() {
 			} else if g.level.data[h][w] == WALL {
 				g.drawBuf.WriteString("▢")
 			} else if g.level.data[h][w] == PLAYER {
-        g.drawBuf.WriteString("⛇")
-        // g.drawBuf.WriteString("⚇")
-      }
+				g.drawBuf.WriteString("⛇")
+				// g.drawBuf.WriteString("⚇")
+			}
 		}
 		g.drawBuf.WriteString("\n")
 	}
@@ -193,7 +200,6 @@ func (g *game) render() {
 	fmt.Fprint(os.Stdout, "\033[2J\033[1;1H")
 
 	g.renderLevel()
-  g.renderPlayer()
 	g.renderStats()
 
 	fmt.Fprint(os.Stdout, g.drawBuf.String())
@@ -202,6 +208,7 @@ func (g *game) render() {
 func (g *game) renderStats() {
 	g.drawBuf.WriteString("-- STATS\n")
 	g.drawBuf.WriteString(fmt.Sprintf("FPS: %.2f\n", g.stats.fps))
+  g.drawBuf.WriteString(fmt.Sprintf("KEYPRESS: %v\n", g.input.pressedKey))
 }
 
 func main() {
