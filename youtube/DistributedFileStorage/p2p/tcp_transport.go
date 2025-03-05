@@ -6,6 +6,21 @@ import (
 	"sync"
 )
 
+// TCPPeer là một peer sử dụng TCP để giao tiếp với các peer khác
+type TCPPeer struct {
+  conn      net.Conn
+  // if we dial and retrieve a connection => outbound = true (Nếu chủ động tạo kết nối đến peer khác bằng Dial())
+  // if we accept and retrieve a connection => outbound = false (Nếu nhận được kết nối từ peer khác bằng Accept())
+  outbound  bool // xác định xem peer này có phải là peer gửi request không
+}
+
+func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
+  return &TCPPeer{
+    conn:     conn,
+    outbound: outbound,
+  }
+}
+
 type TCPTransport struct {
   listenAddress string
   listener      net.Listener
@@ -44,8 +59,10 @@ func (t *TCPTransport) startAcceptLoop() {
 }
 
 func (t *TCPTransport) handleConn(conn net.Conn) {
+  peer := NewTCPPeer(conn, true)
+
   // sao phải dung %+v thay vì %v? %v không đủ để in ra tất cả các thông tin của một biến
-  fmt.Printf("[+] New connection %+v\n", conn) 
+  fmt.Printf("[+] New connection %+v\n", peer) 
 
 } 
 

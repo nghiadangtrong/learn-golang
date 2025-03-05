@@ -1,8 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/nghiadangtrong/learn-golang/youtube/DistributedFileStorage/p2p"
+)
 
 
 func main() {
-  fmt.Println("We In") // giải thich
+  tr := p2p.NewTCPTransport(":3000")
+
+  if err := tr.ListenAndAccept(); err != nil {
+    log.Fatal(err)
+  }
+
+
+  select {} // block forever
 }
