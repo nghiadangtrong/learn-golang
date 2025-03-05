@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+
 func main() {
-  fmt.Println("We In")
+  fmt.Println("We In") // giải thich
 }
